@@ -1,0 +1,154 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+	<title></title>
+<style type='text/css'>
+	#map{width:400px;height:500px;background-color:#abcdef;position:relative;}
+	#control{padding:10px;width:400px;text-align:center;}
+	.btn{padding:5 20px;}
+	.node{background-color:#666;width:10px;height:10px;position:absolute;}
+</style>
+</head>
+<body>
+<div id='map'>
+</div>
+<div id="control">
+	<input type="button" class='btn' id="start" value="Start"/>
+	<input type="button" class='btn' id="stop" value="Stop"/>
+	<input type="text" id='state'>
+</div>
+
+<script src="../public/jquery.js"></script>
+<script type="text/javascript">
+	//范围限制
+	//食物
+
+	//节点的构造函数
+	function Node(xp,yp){
+		this.x = xp;
+		this.y = yp;
+		this.prevNode = null;//前节点
+		this.nextNode = null;//后节点
+	}
+
+	//蛇的构造函数
+	function Snake(){
+		this.state = 'live';
+		this.direction = 'down';
+		this.speed = 1000;
+		this.len = 0;
+		this.head = null;//非循环双向列表
+		this.end = null;
+		//初始化
+		this.init = function(){
+			for(var i = 0;i <= 7;i ++){
+				this.append(0,i * 10);
+			}
+		},
+		//添加身体
+		this.append = function(x,y){
+			var node = new Node(x,y);
+			if(this.len == 0){
+				this.end = node;
+			}else{
+				this.head.nextNode = node;
+				node.prevNode = this.head;
+			}
+			this.head = node;
+			this.len ++;
+			this.draw(x,y);
+		},
+		//去掉末尾
+		this.moveEnd = function(){
+			this.undraw(this.end.x,this.end.y);
+			this.end = this.end.nextNode;
+		},
+		//添加html节点
+		this.draw = function(x,y){
+			$('#map').append("<span class='node' style='left:"+x+";top:"+y+"' data-xy='"+x+"-"+y+"'></span>");
+		},
+		//删除html节点
+		this.undraw = function(x,y){
+			$(".node[data-xy="+x+'-'+y+"]").remove();
+		},
+		//移动
+		this.move = function(){
+			var newX,newY;
+			switch(setting.snake.direction){
+				case 'up':
+					newX = this.head.x;
+					newY = this.head.y - 10;
+					break;
+				case 'down':
+					newX = this.head.x;
+					newY = this.head.y + 10;
+					break;
+				case 'left':
+					newX = this.head.x - 10;
+					newY = this.head.y;
+					break;
+				case 'right':
+					newX = this.head.x + 10;
+					newY = this.head.y;
+					break;
+			}
+			//判断是否碰撞了
+			
+			this.append(newX,newY);
+			this.moveEnd();
+		}
+	}
+
+	//全局设置
+	var setting = {
+		'timeObj' : null,
+		'score' : 0,
+		'level' : 1,
+		'snake' : null
+	};
+	setting.snake = new Snake();
+	setting.snake.init();
+	//记录键盘按键信息
+	$('body').keyup(function(event){
+		//方向不能与当前方向相反
+		var old_direction = setting.snake.direction;
+		switch(event.keyCode){
+			case 37:
+				if(old_direction != 'right'){
+					setting.snake.direction="left";
+				}
+				break;
+			case 38:
+				if(old_direction != 'down'){
+					setting.snake.direction="up";
+				}
+				break;
+			case 39:
+				if(old_direction != 'left'){
+					setting.snake.direction="right";
+				}
+				break;
+			case 40:
+				if(old_direction != 'up'){
+					setting.snake.direction="down";
+				}
+				break;
+		}
+	});
+	//开启计时器
+	$('#start').click(function(){
+		if(!setting.timeObj){
+			setting.timeObj = setInterval(function(){
+				setting.snake.move();
+			},setting.snake.speed);
+		}
+	});
+	//结束计时器
+	$('#stop').click(function(){
+		clearInterval(setting.timeObj);
+		setting.timeObj = null;
+	});
+</script>
+
+</body>
+</html>
