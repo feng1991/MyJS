@@ -3,10 +3,12 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
 	<title></title>
 <style type='text/css'>
-	#map{width:400px;height:500px;background-color:#abcdef;position:relative;}
 	#control{padding:10px;width:400px;text-align:center;}
 	.btn{padding:5 20px;}
-	.node{background-color:#666;width:10px;height:10px;position:absolute;}
+	.input-text{padding:5 10px;width:60px;}
+	#map{width:400px;height:500px;background-color:#abcdef;position:relative;}
+	.node-body{background-color:#666;width:10px;height:10px;position:absolute;}
+	.node-food{background-color:#9400D3;width:10px;height:10px;position:absolute;}
 </style>
 </head>
 <body>
@@ -15,13 +17,22 @@
 <div id="control">
 	<input type="button" class='btn' id="start" value="Start"/>
 	<input type="button" class='btn' id="stop" value="Stop"/>
-	<input type="text" id='state'>
+	Score:<input type="text" class='input-text' id='score'>
 </div>
 
-<script src="../public/jquery.js"></script>
+<script src="jquery.js"></script>
 <script type="text/javascript">
-	//范围限制
-	//食物
+//feng 
+//20150928
+
+//delete
+//数字统一设置
+
+	//产生随机数，10的倍数
+	function rand(start,end){
+		var ran = start + (end-start) * Math.random();
+		return 10 * Math.floor(ran / 10);
+	}
 
 	//节点的构造函数
 	function Node(xp,yp){
@@ -31,11 +42,41 @@
 		this.nextNode = null;//后节点
 	}
 
+	//食物的构造函数
+	function Food(){
+		this.head = null;
+		this.score = null;
+		this.init = function(){
+			this.create();
+		};
+		//生成并显示食物
+		this.create = function(){
+			var x = rand(0,400);
+			var y = rand(0,500);
+			this.head = new Node(x,y);
+			this.score = rand(1,100);
+			this.show(x,y);
+		};
+		//显示食物
+		this.show = function(x,y){
+			$('#map').append("<span class='node-food' style='left:"+x+";top:"+y+"' data-xy='"+x+"-"+y+"'></span>");
+		};
+		//隐藏食物
+		this.hide = function(x,y){
+			$(".node-food[data-xy="+x+'-'+y+"]").remove();
+		};
+
+		this.eaten = function(){
+			setting.food.hide(this.head.x,this.head.y);
+			setting.food.create();
+		}
+	}
+
 	//蛇的构造函数
 	function Snake(){
-		this.state = 'live';
+		this.state = 1;
 		this.direction = 'down';
-		this.speed = 1000;
+		this.speed = 100;//指时间间隔，越小速度越快
 		this.len = 0;
 		this.head = null;//非循环双向列表
 		this.end = null;
@@ -44,7 +85,7 @@
 			for(var i = 0;i <= 7;i ++){
 				this.append(0,i * 10);
 			}
-		},
+		};
 		//添加身体
 		this.append = function(x,y){
 			var node = new Node(x,y);
@@ -56,21 +97,21 @@
 			}
 			this.head = node;
 			this.len ++;
-			this.draw(x,y);
-		},
+			this.show(x,y);
+		};
 		//去掉末尾
 		this.moveEnd = function(){
-			this.undraw(this.end.x,this.end.y);
+			this.hide(this.end.x,this.end.y);
 			this.end = this.end.nextNode;
-		},
-		//添加html节点
-		this.draw = function(x,y){
-			$('#map').append("<span class='node' style='left:"+x+";top:"+y+"' data-xy='"+x+"-"+y+"'></span>");
-		},
-		//删除html节点
-		this.undraw = function(x,y){
-			$(".node[data-xy="+x+'-'+y+"]").remove();
-		},
+		};
+		//显示身体节点
+		this.show = function(x,y){
+			$('#map').append("<span class='node-body' style='left:"+x+";top:"+y+"' data-xy='"+x+"-"+y+"'></span>");
+		};
+		//隐藏身体节点
+		this.hide = function(x,y){
+			$(".node-body[data-xy="+x+'-'+y+"]").remove();
+		};
 		//移动
 		this.move = function(){
 			var newX,newY;
@@ -93,21 +134,72 @@
 					break;
 			}
 			//判断是否碰撞了
-			
+			if(this.isOut(newX,newY)){
+				this.die();
+				return false;
+			}
+			//是否吃到食物
+			if(this.isEating(newX,newY)){
+				setting.score += setting.food.score;
+				$("#score").val(setting.score);
+				this.setSpeed();
+				setting.food.eaten();
+			}else{
+				this.moveEnd();
+			}
 			this.append(newX,newY);
-			this.moveEnd();
+		};
+		//判断是否碰撞了
+		this.isOut = function(x,y){
+			if(x<0 || x>=400 || y<0 || y>=500){
+				return true;
+			}else{
+				return false;
+			}
+		};
+		//判断是否吃到食物
+		this.isEating = function(x,y){
+			if(x == setting.food.head.x && y == setting.food.head.y){
+				return true;
+			}else{
+				return false;
+			}
+		};
+		//设置速度
+		this.setSpeed = function(){
+			//得分越多速度越快
+			var score = setting.score;
+			if(score >= 100 && score < 200){
+				this.speed = 75;
+			}else if(score >= 200 && score < 400){
+				this.speed = 50;
+			}else if(score >= 400 && score < 600){
+				this.speed = 25;
+			}else if(score >= 600 && score < 800){
+				this.speed = 10;
+			}
+			$('#stop').click();
+			$('#start').click();
 		}
+		//死亡
+		this.die = function(){
+			this.state = 0;
+			$('#stop').click();
+			alert('sorry!');
+		};
 	}
 
 	//全局设置
 	var setting = {
 		'timeObj' : null,
 		'score' : 0,
-		'level' : 1,
-		'snake' : null
+		'snake' : null,
+		'food' : null
 	};
 	setting.snake = new Snake();
 	setting.snake.init();
+	setting.food = new Food();
+	setting.food.init();
 	//记录键盘按键信息
 	$('body').keyup(function(event){
 		//方向不能与当前方向相反
@@ -137,7 +229,8 @@
 	});
 	//开启计时器
 	$('#start').click(function(){
-		if(!setting.timeObj){
+		//计时器没开并且蛇没死
+		if(!setting.timeObj && setting.snake.state == 1){
 			setting.timeObj = setInterval(function(){
 				setting.snake.move();
 			},setting.snake.speed);
