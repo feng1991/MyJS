@@ -1,0 +1,91 @@
+<html>
+<head>
+<style type="text/css">
+	#area_div{
+		width:500px;
+		margin:0 auto;
+	}
+	.area{
+		width:100px;
+		height:100px;
+		display:block;
+		float:left;
+		border:1px solid #fff;
+		background-color: #abcdef;
+	}
+	.flag{
+		background-color: #FF9900;
+	}
+</style>
+</head>
+<body>
+	<div id='area_div'>
+	<span class="area" id="area1"></span>
+	<span class="area" id="area2"></span>
+	<span class="area" id="area3"></span>
+	<span class="area" id="area4"></span><br/>
+	<span class="area" id="area5"></span>
+	<span class="area" id="area6"></span>
+	<span class="area" id="area7"></span>
+	<span class="area" id="area8"></span>
+	<span class="area" id="area9"></span>
+	<span class="area" id="area10"></span>
+	<span class="area" id="area11"></span>
+	<span class="area" id="area12"></span>
+	<span class="area" id="area13"></span>
+	<span class="area" id="area14"></span>
+	<span class="area" id="area15"></span>
+	<span class="area" id="area16"></span>
+	</div>
+</body>
+</html>
+<script type="text/javascript">
+
+function $(s) {
+	return document.querySelector(s);
+};
+function $$(s){
+	return document.querySelectorAll(s);
+}
+Math.mt_rand = function(min,max){
+	return min + Math.floor( Math.rand() * (max-min) );
+}
+Element.prototype.addClass = function(className){
+	this.className += '  '+className;
+}
+Element.prototype.hasClass = function(className){
+	return this.className.match( new RegExp( "(\\s|^)" + className + "(\\s|$)") );
+}
+Element.prototype.removeClass = function(className){
+	this.className = this.className.replace( new RegExp( "(\\s|^)" + className + "(\\s|$)" ) , '');
+}
+Element.prototype.toggleClass = function(className){
+	if(this.hasClass(className)){
+		this.removeClass(className);
+	}else{
+		this.addClass(className);	
+	}
+}
+
+//stop the  menu
+document.oncontextmenu=function(e){
+	return false;
+};
+
+function area{
+	
+}
+
+
+var all_area = $$('.area');
+for(var i in all_area){
+	all_area[i].onmouseup = function(e){
+		if(e.button == 2){
+			this.toggleClass('flag');
+		}else if(e.button == 0){
+			console.log(4);
+		}
+	}
+}
+
+</script>
