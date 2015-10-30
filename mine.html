@@ -16,6 +16,12 @@
 	.flag{
 		background-color: #FF9900;
 	}
+	.on{
+		background-color: green;
+	}
+	.dead{
+		background-color: red
+	}
 </style>
 </head>
 <body>
@@ -48,7 +54,11 @@ function $$(s){
 	return document.querySelectorAll(s);
 }
 Math.mt_rand = function(min,max){
-	return min + Math.floor( Math.rand() * (max-min) );
+	if(arguments.length == 1){
+		max = min;
+		min = 1;
+	}
+	return min + Math.floor( Math.random() * (max-min) );
 }
 Element.prototype.addClass = function(className){
 	this.className += '  '+className;
@@ -67,23 +77,69 @@ Element.prototype.toggleClass = function(className){
 	}
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 //stop the  menu
-document.oncontextmenu=function(e){
+document.oncontextmenu=function(){
 	return false;
 };
 
-function area{
-	
-}
 
-
+var setting = {
+	'count' : 16,
+	'mine_count' : 3,
+	'mine_location' : []
+};
 var all_area = $$('.area');
+//initialize the location of mines
+for(var i = 0;i < setting.mine_count;i = i){
+	var num = Math.mt_rand(setting.count);
+	if(-1 == setting.mine_location.indexOf(num) ){
+		setting.mine_location.push(num);
+		i++;
+	}
+}
+//console.log(setting.mine_location);
+//bind mouse event
 for(var i in all_area){
 	all_area[i].onmouseup = function(e){
+		if( this.hasClass('on') || this.hasClass('flag') ){
+			return false;
+		}
+		var choose = parseInt(this.id.slice(4));
 		if(e.button == 2){
+		//right mouse button
 			this.toggleClass('flag');
 		}else if(e.button == 0){
-			console.log(4);
+		//left mouse button
+			if(-1 != setting.mine_location.indexOf(choose)){
+				this.addClass('dead');
+			}else{
+				
+				this.addClass('on');
+			}
+		}
+		getResult();
+	}
+}
+//decide win or fail
+function getResult(){
+	var dead_count = $$('.area.dead').length;
+	if(  ($$('.area.on').length + $$('.area.flag').length + dead_count)  >= setting.count ){
+		if(dead_count == 0){
+			alert('win');
+		}else{
+			alert('lost');
 		}
 	}
 }
