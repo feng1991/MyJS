@@ -17,10 +17,10 @@
 		background-color: #FF9900;
 	}
 	.on{
-		background-color: green;
+		background-color: #9acd32;
 	}
 	.dead{
-		background-color: red
+		background-color: #ff6347;
 	}
 </style>
 </head>
@@ -109,37 +109,96 @@ for(var i = 0;i < setting.mine_count;i = i){
 		i++;
 	}
 }
-//console.log(setting.mine_location);
+//to see all mines
+console.log(setting.mine_location);
 //bind mouse event
 for(var i in all_area){
 	all_area[i].onmouseup = function(e){
-		if( this.hasClass('on') || this.hasClass('flag') ){
-			return false;
-		}
 		var choose = parseInt(this.id.slice(4));
 		if(e.button == 2){
 		//right mouse button
-			this.toggleClass('flag');
+			if( !this.hasClass('on')  ){
+				this.toggleClass('flag');
+			}
 		}else if(e.button == 0){
 		//left mouse button
+			if( this.hasClass('on') || this.hasClass('flag') ){
+				return false;
+			}
 			if(-1 != setting.mine_location.indexOf(choose)){
 				this.addClass('dead');
 			}else{
-				
+				if( isShow() ){
+					showTip(choose);
+				}
 				this.addClass('on');
 			}
 		}
 		getResult();
 	}
 }
+//whether to show tips
+function isShow(){
+	if( Math.mt_rand(10) > 5 ){
+		return true;
+	}else{
+		return false;
+	}
+}
+//show tips
+function showTip(choose){
+	var toOpen =getAround(choose);
+	//console.log(toOpen);
+	for(var i=0;i<toOpen.length;i++){
+		if( -1 == setting.mine_location.indexOf(toOpen[i]) ){
+			var areaChoose = $('#area'+toOpen[i]);
+			if( !areaChoose.hasClass('on') && !areaChoose.hasClass('flag') ){
+				areaChoose.addClass('on');
+			}
+		}
+	}
+}
+//get around: up,down,left,right
+function getAround(choose){
+	var base = Math.sqrt(setting.count);
+	var list = choose % base;
+	var row = Math.ceil( choose / base );
+	var toOpen = [];
+	if(list == 0){
+	//has left
+		toOpen.push(choose -1);
+	}else if(list == 1){
+	//has right
+		toOpen.push(choose +1);
+	}else{
+	//has left and right
+		toOpen.push(choose - 1);
+		toOpen.push(choose +1);
+	}
+	if( row == 1){
+	//has down
+		toOpen.push(choose + base);
+	}else if( row == base){
+	//has up
+		toOpen.push(choose - base);
+	}else{
+	//has up and down
+		toOpen.push(choose + base);
+		toOpen.push(choose - base);
+	}
+	return toOpen;
+}
 //decide win or fail
 function getResult(){
 	var dead_count = $$('.area.dead').length;
+	if(dead_count > 0){
+		alert('fail');
+	}
 	if(  ($$('.area.on').length + $$('.area.flag').length + dead_count)  >= setting.count ){
 		if(dead_count == 0){
 			alert('win');
 		}else{
-			alert('lost');
+			alert('fail');
 		}
 	}
 }
