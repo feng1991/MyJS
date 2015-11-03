@@ -2,12 +2,9 @@
 <head>
 <style type="text/css">
 	#area_div{
-		width:500px;
 		margin:0 auto;
 	}
 	.area{
-		width:100px;
-		height:100px;
 		display:block;
 		float:left;
 		border:1px solid #fff;
@@ -22,31 +19,36 @@
 	.dead{
 		background-color: #ff6347;
 	}
+	body{
+		position:relative;
+	}
+	#info{
+		position:absolute;
+		right:0px;
+		top:0px;
+		padding-left:12px;
+		width:160px;
+	}
 </style>
 </head>
 <body>
 	<div id='area_div'>
-	<span class="area" id="area1"></span>
-	<span class="area" id="area2"></span>
-	<span class="area" id="area3"></span>
-	<span class="area" id="area4"></span><br/>
-	<span class="area" id="area5"></span>
-	<span class="area" id="area6"></span>
-	<span class="area" id="area7"></span>
-	<span class="area" id="area8"></span>
-	<span class="area" id="area9"></span>
-	<span class="area" id="area10"></span>
-	<span class="area" id="area11"></span>
-	<span class="area" id="area12"></span>
-	<span class="area" id="area13"></span>
-	<span class="area" id="area14"></span>
-	<span class="area" id="area15"></span>
-	<span class="area" id="area16"></span>
+		<!-- <span class="area" id="area1"></span> -->
+	</div>
+	<div id="info">
+		<span>step:&nbsp;<input type="text" id="step" value="8" size="1"></span><br/>
+		<span>mine:<input type="text" id="mine" value="2" size="1"></span><br/>
+		<span><input type="button" id="start" value="Start" ></span><br/>
+		<span><input type="button" id="open" value="Open All" ></span>
 	</div>
 </body>
 </html>
-<script type="text/javascript">
 
+
+
+
+
+<script type="text/javascript">
 function $(s) {
 	return document.querySelector(s);
 };
@@ -80,6 +82,8 @@ Element.prototype.toggleClass = function(className){
 
 
 
+//bug
+//base can't be greater than 13
 
 
 
@@ -88,55 +92,106 @@ Element.prototype.toggleClass = function(className){
 
 
 
+
+
+var setting = {
+	'width' : 600,
+	'base' : 8,
+	'count' : 64,
+	'mine_count' : 2,
+	'mine_location' : []
+};
+var area_div = $('#area_div'),
+	span,
+	span_width,
+	all_area;
 
 //stop the  menu
 document.oncontextmenu=function(){
 	return false;
 };
+//get start
+$('#start').onclick = function(){
+	setting.base = parseInt($('#step').value);
+	setting.count = setting.base * setting.base;
+	setting.mine_count = parseInt($('#mine').value);
+	area_div.innerHTML = '';
+	setting.mine_location = [];
+	set_areas();
+	set_mines();
+	bind_mouse();
+}
+//open all the areas
+$('#open').click = function(){
+	var event;
+	for(var i in all_area){
+		if( !all_area[i].hasClass('on') && !all_area[i].hasClass('flag') && !all_area[i].hasClass('dead') ){
+			//event = document.createEvent('HTMLEvents');
+			//event.initEvent('onmouseup',false,true);
+			//all_area[i].dispatchEvent(event);
+		}
+	}
+}
 
 
-var setting = {
-	'count' : 16,
-	'mine_count' : 3,
-	'mine_location' : []
-};
-var all_area = $$('.area');
+//initialize the areas
+function set_areas(){
+	span_width = Math.floor(setting.width / (setting.base + 1))+1;
+	area_div.style.width = setting.width+'px';
+	area_div.style.height = span_width * setting.base + 100 +'px';
+	for(var i = 1;i <= setting.count;i ++){
+		span = document.createElement('span');
+		span.addClass('area');
+		span.style.width = span_width + 'px';
+		span.style.height = span_width + 'px';
+		span.id = 'area'+i;
+		area_div.appendChild(span);
+	}
+	all_area = $$('.area');
+}
+
 //initialize the location of mines
-for(var i = 0;i < setting.mine_count;i = i){
-	var num = Math.mt_rand(setting.count);
-	if(-1 == setting.mine_location.indexOf(num) ){
-		setting.mine_location.push(num);
-		i++;
+function set_mines(){
+	for(i = 0;i < setting.mine_count;i = i){
+		var num = Math.mt_rand(setting.count);
+		if(-1 == setting.mine_location.indexOf(num) ){
+			setting.mine_location.push(num);
+			i++;
+		}
 	}
 }
 //to see all mines
-console.log(setting.mine_location);
+//console.log(setting.mine_location);
+
 //bind mouse event
-for(var i in all_area){
-	all_area[i].onmouseup = function(e){
-		var choose = parseInt(this.id.slice(4));
-		if(e.button == 2){
-		//right mouse button
-			if( !this.hasClass('on')  ){
-				this.toggleClass('flag');
-			}
-		}else if(e.button == 0){
-		//left mouse button
-			if( this.hasClass('on') || this.hasClass('flag') ){
-				return false;
-			}
-			if(-1 != setting.mine_location.indexOf(choose)){
-				this.addClass('dead');
-			}else{
-				if( isShow() ){
-					showTip(choose);
+function bind_mouse(){
+	for(var i in all_area){
+		all_area[i].onmouseup = function(e){
+			var choose = parseInt(this.id.slice(4));
+			if(e.button == 2){
+			//right mouse button
+				if( !this.hasClass('on')  ){
+					this.toggleClass('flag');
 				}
-				this.addClass('on');
+			}else if(e.button == 0){
+			//left mouse button
+				if( this.hasClass('on') || this.hasClass('flag') ){
+					return false;
+				}
+				if(-1 != setting.mine_location.indexOf(choose)){
+					this.addClass('dead');
+				}else{
+					if( isShow() ){
+						showTip(choose);
+					}
+					this.addClass('on');
+				}
 			}
+			getResult();
 		}
-		getResult();
 	}
 }
+
 //whether to show tips
 function isShow(){
 	if( Math.mt_rand(10) > 5 ){
@@ -145,6 +200,7 @@ function isShow(){
 		return false;
 	}
 }
+
 //show tips
 function showTip(choose){
 	var toOpen =getAround(choose);
@@ -158,9 +214,10 @@ function showTip(choose){
 		}
 	}
 }
+
 //get around: up,down,left,right
 function getAround(choose){
-	var base = Math.sqrt(setting.count);
+	var base = setting.base;
 	var list = choose % base;
 	var row = Math.ceil( choose / base );
 	var toOpen = [];
@@ -188,6 +245,7 @@ function getAround(choose){
 	}
 	return toOpen;
 }
+
 //decide win or fail
 function getResult(){
 	var dead_count = $$('.area.dead').length;
