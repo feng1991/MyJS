@@ -1,5 +1,4 @@
-#  This repository was created in 2015-01-24
-## My work:
+## My work(Began on 2015-01-24):
 
 ### Snake
 - It is made of HTML,CSS,JAVASCRIPT.
