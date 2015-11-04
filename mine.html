@@ -1,27 +1,17 @@
 <html>
 <head>
 <style type="text/css">
-	#area_div{
-		margin:0 auto;
-	}
+	#area_div{margin:0 auto;}
 	.area{
 		display:block;
 		float:left;
 		border:1px solid #fff;
 		background-color: #abcdef;
 	}
-	.flag{
-		background-color: #FF9900;
-	}
-	.on{
-		background-color: #9acd32;
-	}
-	.dead{
-		background-color: #ff6347;
-	}
-	body{
-		position:relative;
-	}
+	.flag{background-color: #FF9900;}
+	.on{background-color: #9acd32;}
+	.dead{background-color: #ff6347;}
+	body{position:relative;}
 	#info{
 		position:absolute;
 		right:0px;
@@ -29,6 +19,27 @@
 		padding-left:12px;
 		width:160px;
 	}
+	#demo{
+		position:absolute;
+		right:0px;
+		top:150px;
+		padding-left:12px;
+		padding-right:12px;
+		width:160px;
+	}
+	.demo_span{
+		display:block;
+		width:120px;
+		height:30px;
+	}
+	.count1{background-color: #C0C0C0;}
+	.count2{background-color: #BDB76B;}
+	.count3{background-color: #BC8F8F;}
+	.count4{background-color: #B8860B;}
+	.count5{background-color: #A0522D;}
+	.count6{background-color: #B0E0E6;}
+	.count7{background-color: #9932CC;}
+	.count8{background-color: #4B0082;}
 </style>
 </head>
 <body>
@@ -41,10 +52,11 @@
 		<span><input type="button" id="start" value="Start" ></span><br/>
 		<span><input type="button" id="open" value="Open All" ></span>
 	</div>
+	<div id="demo">
+		<!-- <span class="count1 demo_span">1</span> -->
+	</div>
 </body>
 </html>
-
-
 
 
 
@@ -85,10 +97,9 @@ Element.prototype.toggleClass = function(className){
 //bug
 //base can't be greater than 13
 
-
-
-
-
+//todo
+//open all
+//more hints
 
 
 
@@ -110,13 +121,17 @@ var area_div = $('#area_div'),
 document.oncontextmenu=function(){
 	return false;
 };
+start();
 //get start
-$('#start').onclick = function(){
+$('#start').onclick = start;
+//start
+function start(){
 	setting.base = parseInt($('#step').value);
 	setting.count = setting.base * setting.base;
 	setting.mine_count = parseInt($('#mine').value);
 	area_div.innerHTML = '';
 	setting.mine_location = [];
+	setDemo();
 	set_areas();
 	set_mines();
 	bind_mouse();
@@ -133,7 +148,20 @@ $('#open').click = function(){
 	}
 }
 
-
+//show demo
+function setDemo(){
+	var span,text;
+	$('#demo').innerHTML = '';
+	for(var i=1;i<=8;i++){
+		span = document.createElement('span');
+		span.addClass('demo_span');
+		span.addClass('count'+i);
+		text = document.createTextNode('count : '+i);
+		span.appendChild(text);
+		console.log(span);
+		$('#demo').appendChild(span);
+	}
+}
 //initialize the areas
 function set_areas(){
 	span_width = Math.floor(setting.width / (setting.base + 1))+1;
@@ -159,15 +187,16 @@ function set_mines(){
 			i++;
 		}
 	}
+	//to see all mines
+	console.log(setting.mine_location);
 }
-//to see all mines
-//console.log(setting.mine_location);
 
 //bind mouse event
 function bind_mouse(){
 	for(var i in all_area){
 		all_area[i].onmouseup = function(e){
 			var choose = parseInt(this.id.slice(4));
+			//console.log(getAroundAll(choose));
 			if(e.button == 2){
 			//right mouse button
 				if( !this.hasClass('on')  ){
@@ -204,12 +233,17 @@ function isShow(){
 //show tips
 function showTip(choose){
 	var toOpen =getAround(choose);
-	//console.log(toOpen);
+	var toTip,
+	       count;
 	for(var i=0;i<toOpen.length;i++){
 		if( -1 == setting.mine_location.indexOf(toOpen[i]) ){
 			var areaChoose = $('#area'+toOpen[i]);
 			if( !areaChoose.hasClass('on') && !areaChoose.hasClass('flag') ){
 				areaChoose.addClass('on');
+				toTip = getAroundAll(toOpen[i]);
+				count = count_around_mines(toTip);
+				console.log(toOpen[i]+'-'+count);
+				areaChoose.addClass('count'+count);
 			}
 		}
 	}
@@ -244,6 +278,87 @@ function getAround(choose){
 		toOpen.push(choose - base);
 	}
 	return toOpen;
+}
+
+
+//get around: eight direction
+function getAroundAll(choose){
+	var base = setting.base;
+	var list = choose % base;
+	var row = Math.ceil( choose / base );
+	var toOpen = [];
+	if(list == 0){
+	//has left
+		toOpen.push(choose -1);
+		if( row == 1){
+		//has down left-down
+			toOpen.push(choose + base);
+			toOpen.push(choose + base -1);
+		}else if( row == base){
+		//has up left-up
+			toOpen.push(choose - base);
+			toOpen.push(choose - base - 1);
+		}else{
+		//has up  down left-up left-down
+			toOpen.push(choose + base);
+			toOpen.push(choose - base);
+			toOpen.push(choose + base - 1);
+			toOpen.push(choose - base - 1);
+		}
+	}else if(list == 1){
+	//has right
+		toOpen.push(choose +1);
+		if( row == 1){
+		//has down right-down
+			toOpen.push(choose + base);
+			toOpen.push(choose + base +1);
+		}else if( row == base){
+		//has up right-up
+			toOpen.push(choose - base);
+			toOpen.push(choose - base + 1);
+		}else{
+		//has up  down right-up right-down
+			toOpen.push(choose + base);
+			toOpen.push(choose - base);
+			toOpen.push(choose + base + 1);
+			toOpen.push(choose - base + 1);
+		}
+	}else{
+	//has left and right
+		toOpen.push(choose - 1);
+		toOpen.push(choose +1);
+		if( row == 1){
+		//has down right-down left-down
+			toOpen.push(choose + base);
+			toOpen.push(choose + base +1);
+			toOpen.push(choose + base - 1);
+		}else if( row == base){
+		//has up right-up left-up
+			toOpen.push(choose - base);
+			toOpen.push(choose - base + 1);
+			toOpen.push(choose - base -1);
+		}else{
+		//has eight
+			toOpen.push(choose + base);
+			toOpen.push(choose - base);
+			toOpen.push(choose + base + 1);
+			toOpen.push(choose - base + 1);
+			toOpen.push(choose + base -1);
+			toOpen.push(choose - base -1);
+		}
+	}
+	return toOpen;
+}
+
+//count the number  of mines in tips
+function count_around_mines(tips){
+	var count = 0;
+	for(var i=0;i<setting.mine_location.length;i++){
+		if( tips.indexOf(setting.mine_location[i]) != -1 ){
+			count++;
+		}
+	}
+	return count;
 }
 
 //decide win or fail
