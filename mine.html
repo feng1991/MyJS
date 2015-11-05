@@ -1,6 +1,7 @@
-<html>
+<!doctype html>
 <head>
 <style type="text/css">
+	body{position:relative;}
 	#area_div{margin:0 auto;}
 	.area{
 		display:block;
@@ -8,10 +9,6 @@
 		border:1px solid #fff;
 		background-color: #abcdef;
 	}
-	.flag{background-color: #FF9900;}
-	.on{background-color: #9acd32;}
-	.dead{background-color: #ff6347;}
-	body{position:relative;}
 	#info{
 		position:absolute;
 		right:0px;
@@ -32,15 +29,19 @@
 		width:120px;
 		height:30px;
 	}
+	.flag{background-color: #FF9900;}
+	.on{background-color: #9acd32;}
+	.dead{background-color: #ff6347;}
 	.count1{background-color: #C0C0C0;}
 	.count2{background-color: #BDB76B;}
 	.count3{background-color: #BC8F8F;}
 	.count4{background-color: #B8860B;}
 	.count5{background-color: #A0522D;}
-	.count6{background-color: #B0E0E6;}
+	.count6{background-color: #800000;}
 	.count7{background-color: #9932CC;}
 	.count8{background-color: #4B0082;}
 </style>
+<meta charset='utf-8'>
 </head>
 <body>
 	<div id='area_div'>
@@ -49,7 +50,7 @@
 	<div id="info">
 		<span>step:&nbsp;<input type="text" id="step" value="8" size="1"></span><br/>
 		<span>mine:<input type="text" id="mine" value="2" size="1"></span><br/>
-		<span><input type="button" id="start" value="Start" ></span><br/>
+		<span><input type="button" id="start" value="Reset" ></span><br/>
 		<span><input type="button" id="open" value="Open All" ></span>
 	</div>
 	<div id="demo">
@@ -61,6 +62,12 @@
 
 
 <script type="text/javascript">
+
+//bug
+//base can't be greater than 13
+
+
+/*****common function*****/
 function $(s) {
 	return document.querySelector(s);
 };
@@ -90,22 +97,14 @@ Element.prototype.toggleClass = function(className){
 		this.addClass(className);	
 	}
 }
+/*****common function*****/
 
 
 
 
-//bug
-//base can't be greater than 13
-
-//todo
-//open all
-//more hints
-
-
-
-
-
+/*****game logic*****/
 var setting = {
+	'result' : 0,//1 for win,2 for fail
 	'width' : 600,
 	'base' : 8,
 	'count' : 64,
@@ -121,11 +120,15 @@ var area_div = $('#area_div'),
 document.oncontextmenu=function(){
 	return false;
 };
-start();
+
 //get start
 $('#start').onclick = start;
+
+start();
+
 //start
 function start(){
+	setting.result = 0;
 	setting.base = parseInt($('#step').value);
 	setting.count = setting.base * setting.base;
 	setting.mine_count = parseInt($('#mine').value);
@@ -134,18 +137,8 @@ function start(){
 	setDemo();
 	set_areas();
 	set_mines();
+	bind_openbutton();
 	bind_mouse();
-}
-//open all the areas
-$('#open').click = function(){
-	var event;
-	for(var i in all_area){
-		if( !all_area[i].hasClass('on') && !all_area[i].hasClass('flag') && !all_area[i].hasClass('dead') ){
-			//event = document.createEvent('HTMLEvents');
-			//event.initEvent('onmouseup',false,true);
-			//all_area[i].dispatchEvent(event);
-		}
-	}
 }
 
 //show demo
@@ -158,10 +151,10 @@ function setDemo(){
 		span.addClass('count'+i);
 		text = document.createTextNode('count : '+i);
 		span.appendChild(text);
-		console.log(span);
 		$('#demo').appendChild(span);
 	}
 }
+
 //initialize the areas
 function set_areas(){
 	span_width = Math.floor(setting.width / (setting.base + 1))+1;
@@ -191,12 +184,30 @@ function set_mines(){
 	console.log(setting.mine_location);
 }
 
+//open all the areas
+function bind_openbutton(){
+	$('#open').onclick = function(){
+		if( isAllMinesFlaged() ){
+			for(var i = 0;i < all_area.length;i ++){
+				if( !all_area[i].hasClass('on') && !all_area[i].hasClass('flag') && !all_area[i].hasClass('dead') ){
+					all_area[i].addClass('on');
+				}
+			}
+			win();
+		}else{
+			alert('Patient,budy!');
+		}
+	}
+}
+
 //bind mouse event
 function bind_mouse(){
-	for(var i in all_area){
+	for(var i = 0;i < all_area.length;i ++){
 		all_area[i].onmouseup = function(e){
+			if(setting.result  > 0){
+				return false;
+			}
 			var choose = parseInt(this.id.slice(4));
-			//console.log(getAroundAll(choose));
 			if(e.button == 2){
 			//right mouse button
 				if( !this.hasClass('on')  ){
@@ -242,7 +253,6 @@ function showTip(choose){
 				areaChoose.addClass('on');
 				toTip = getAroundAll(toOpen[i]);
 				count = count_around_mines(toTip);
-				console.log(toOpen[i]+'-'+count);
 				areaChoose.addClass('count'+count);
 			}
 		}
@@ -361,19 +371,45 @@ function count_around_mines(tips){
 	return count;
 }
 
+//check is all mines are flaged
+function isAllMinesFlaged(){
+	var flags = [];
+	var flagArea = $$('.area.flag');
+	for(var i = 0;i < flagArea.length;i ++){
+		flags.push( parseInt(flagArea[i].id.slice(4)) );
+	}
+	if( setting.mine_location.sort().toString() == flags.sort().toString() ){
+		return true;
+	}
+	return false;
+}
+
 //decide win or fail
 function getResult(){
 	var dead_count = $$('.area.dead').length;
 	if(dead_count > 0){
-		alert('fail');
+		fail();
 	}
 	if(  ($$('.area.on').length + $$('.area.flag').length + dead_count)  >= setting.count ){
 		if(dead_count == 0){
-			alert('win');
+			win();
 		}else{
-			alert('fail');
+			fail();
 		}
 	}
 }
+
+//win!!
+function win(){
+	setting.result = 1;
+	alert('win');
+}
+
+//fail!!
+function fail(){
+	setting.result = 2;
+	alert('fail');
+}
+/*****game logic*****/
 
 </script>
