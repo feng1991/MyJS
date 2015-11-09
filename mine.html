@@ -14,20 +14,20 @@
 		right:0px;
 		top:0px;
 		padding-left:12px;
-		width:160px;
+		width:110px;
 	}
-	#demo{
+	#demo_field{
 		position:absolute;
 		right:0px;
-		top:150px;
+		top:180px;
 		padding-left:12px;
 		padding-right:12px;
-		width:160px;
 	}
 	.demo_span{
 		display:block;
-		width:120px;
+		width:60px;
 		height:30px;
+		text-align:center;
 	}
 	.flag{background-color: #FF9900;}
 	.on{background-color: #9acd32;}
@@ -47,24 +47,27 @@
 	<div id='area_div'>
 		<!-- <span class="area" id="area1"></span> -->
 	</div>
-	<div id="info">
+
+	<fieldset id="info">
+		<legend>Control</legend>
 		<span>step:&nbsp;<input type="text" id="step" value="8" size="1"></span><br/>
-		<span>mine:<input type="text" id="mine" value="2" size="1"></span><br/>
+		<span>mine:<input type="text" id="mine" value="2" size="1"></span><br/><br/>
 		<span><input type="button" id="start" value="Reset" ></span><br/>
-		<span><input type="button" id="open" value="Open All" ></span>
-	</div>
-	<div id="demo">
-		<!-- <span class="count1 demo_span">1</span> -->
-	</div>
+		<span><input type="button" id="open" value="Open Rest" ></span>
+	</fieldset>
+	
+	<fieldset id="demo_field">
+		<legend>Count</legend>
+		<div id='demo'>
+			<!-- <span class="count1 demo_span">1</span> -->
+		</div>
+	</fieldset>
 </body>
 </html>
 
 
 
 <script type="text/javascript">
-
-//bug
-//base can't be greater than 13
 
 
 /*****common function*****/
@@ -132,6 +135,10 @@ function start(){
 	setting.base = parseInt($('#step').value);
 	setting.count = setting.base * setting.base;
 	setting.mine_count = parseInt($('#mine').value);
+	if(!check_input()){
+		alert('Come on,buddy');
+		return false;
+	}
 	area_div.innerHTML = '';
 	setting.mine_location = [];
 	setDemo();
@@ -139,6 +146,15 @@ function start(){
 	set_mines();
 	bind_openbutton();
 	bind_mouse();
+}
+
+//check whether the setting is right or wrong
+function check_input(){
+	if( isNaN(setting.count) || isNaN(setting.mine_count) || setting.count<=0 || setting.mine_count<=0 || setting.mine_count > setting.count){
+		return false;
+	}else{
+		return true;
+	}
 }
 
 //show demo
@@ -149,7 +165,7 @@ function setDemo(){
 		span = document.createElement('span');
 		span.addClass('demo_span');
 		span.addClass('count'+i);
-		text = document.createTextNode('count : '+i);
+		text = document.createTextNode(i);
 		span.appendChild(text);
 		$('#demo').appendChild(span);
 	}
@@ -157,7 +173,7 @@ function setDemo(){
 
 //initialize the areas
 function set_areas(){
-	span_width = Math.floor(setting.width / (setting.base + 1))+1;
+	span_width = Math.floor(setting.width / setting.base -2) ;
 	area_div.style.width = setting.width+'px';
 	area_div.style.height = span_width * setting.base + 100 +'px';
 	for(var i = 1;i <= setting.count;i ++){
