@@ -19,7 +19,7 @@
 	#demo_field{
 		position:absolute;
 		right:0px;
-		top:180px;
+		top:240px;
 		padding-left:12px;
 		padding-right:12px;
 	}
@@ -51,8 +51,10 @@
 	<fieldset id="info">
 		<legend>Control</legend>
 		<span>step:&nbsp;<input type="text" id="step" value="8" size="1"></span><br/>
-		<span>mine:<input type="text" id="mine" value="2" size="1"></span><br/><br/>
+		<span>mine:<input type="text" id="mine" value="2" size="1"></span><br/>
+		<span>times:<input type="text" id="times" value="" size="1" disabled></span><br/><br/>
 		<span><input type="button" id="start" value="Reset" ></span><br/>
+		<span><input type="button" id="help" value="Help" ></span><br/>
 		<span><input type="button" id="open" value="Open Rest" ></span>
 	</fieldset>
 	
@@ -112,7 +114,8 @@ var setting = {
 	'base' : 8,
 	'count' : 64,
 	'mine_count' : 2,
-	'mine_location' : []
+	'mine_location' : [],
+	'time' : 0
 };
 var area_div = $('#area_div'),
 	span,
@@ -144,8 +147,12 @@ function start(){
 	setDemo();
 	set_areas();
 	set_mines();
+	set_times();
 	bind_openbutton();
+	bind_help();
 	bind_mouse();
+	$('#help').disabled = false;
+	$('#open').disabled = false;
 }
 
 //check whether the setting is right or wrong
@@ -200,6 +207,13 @@ function set_mines(){
 	console.log(setting.mine_location);
 }
 
+//set the times of flagging a mine
+function set_times(){
+	var times = Math.mt_rand(setting.mine_count / 2);
+	setting.times = times;
+	$('#times').value = times;
+}
+
 //open all the areas
 function bind_openbutton(){
 	$('#open').onclick = function(){
@@ -212,6 +226,24 @@ function bind_openbutton(){
 			win();
 		}else{
 			alert('Patient,budy!');
+		}
+	}
+}
+
+//get help
+function bind_help(){
+	$('#help').onclick = function(){
+		if(setting.times <= 0){
+			alert('Sorry,do it yourself.');
+		}else{
+			for(var i=0;i<setting.mine_count;i++){
+				if( !$('#area'+setting.mine_location[i]).hasClass('flag') ){
+					$('#area'+setting.mine_location[i]).addClass('flag');
+					break;
+				}
+			}
+			setting.times --;
+			$('#times').value = setting.times;
 		}
 	}
 }
@@ -424,6 +456,8 @@ function win(){
 //fail!!
 function fail(){
 	setting.result = 2;
+	$('#help').disabled = true;
+	$('#open').disabled = true;
 	alert('fail');
 }
 /*****game logic*****/
