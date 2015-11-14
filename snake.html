@@ -9,6 +9,12 @@
 	.input-text{padding:5 10px;width:60px;}
 	.node-body{background-color:#666;width:10px;height:10px;position:absolute;}
 	.node-food{background-color:#9400D3;width:10px;height:10px;position:absolute;}
+	.low-food{background-color:#FFDAB9}
+	.normal-food{background-color:#FA8072}
+	.high-food{background-color:#FF0000}
+	.level-food{background-color:#32CD32}
+	.gold-food{background-color:#FFFF00}
+	.random-food{background-color:#9400D3}
 </style>
 </head>
 <body>
@@ -16,7 +22,8 @@
 	<div id="control">
 		<input type="button" class='btn' id="start" value="Start"/>
 		<input type="button" class='btn' id="stop" value="Stop"/>
-		Score:<input type="text" class='input-text' id='score'>
+		Level:<input type="text" class='input-text' id='level' size="1" value="1">
+		Score:<input type="text" class='input-text' id='score' size="1" value="0">
 	</div>
 </body>
 </html>
@@ -25,8 +32,6 @@
 
 <script src="jquery.js"></script>
 <script type="text/javascript">
-//delete
-//数字统一设置
 
 	//产生随机数，10的倍数
 	function rand(start,end){
@@ -54,18 +59,28 @@
 			var x = rand(0,400);
 			var y = rand(0,500);
 			this.head = new Node(x,y);
-			this.score = rand(1,100);
+			this.score = rand(1,150);
 			this.show(x,y);
 		};
 		//显示食物
 		this.show = function(x,y){
-			$('#map').append("<span class='node-food' style='left:"+x+";top:"+y+"' data-xy='"+x+"-"+y+"'></span>");
+			var type;
+			if(this.score <= 33){
+				type = "low-food";
+			}else if(this.score <= 66){
+				type = "normal-food";
+			}else if(this.score <= 100){
+				type = "high-food";
+			}else if(this.score <= 125){
+				type = "level-food";
+			}
+			$('#map').append("<span class='node-food "+type+"' style='left:"+x+";top:"+y+"' data-xy='"+x+"-"+y+"'></span>");
 		};
 		//隐藏食物
 		this.hide = function(x,y){
 			$(".node-food[data-xy="+x+'-'+y+"]").remove();
 		};
-
+		//被吃
 		this.eaten = function(){
 			setting.food.hide(this.head.x,this.head.y);
 			setting.food.create();
@@ -140,8 +155,7 @@
 			}
 			//是否吃到食物
 			if(this.isEating(newX,newY)){
-				setting.score += setting.food.score;
-				$("#score").val(setting.score);
+				change_score(1);
 				this.setSpeed();
 				setting.food.eaten();
 			}else{
@@ -169,6 +183,7 @@
 		this.setSpeed = function(){
 			//得分越多速度越快
 			var score = setting.score;
+			var old_speed = this.speed;
 			if(score >= 100 && score < 200){
 				this.speed = 75;
 			}else if(score >= 200 && score < 400){
@@ -178,13 +193,20 @@
 			}else if(score >= 600 && score < 800){
 				this.speed = 10;
 			}
-			$('#stop').click();
-			$('#start').click();
+			//降级果实
+			if(setting.food.score > 100 && setting.food.score <= 125){
+				change_level(-1);
+				this.speed += 20;
+			}else if(old_speed != this.speed){
+				change_level(1);
+			}
+			stop();
+			start();
 		}
 		//死亡
 		this.die = function(){
 			this.state = 0;
-			$('#stop').click();
+			stop();
 			alert('sorry!');
 		};
 	}
@@ -192,53 +214,95 @@
 	//全局设置
 	var setting = {
 		'timeObj' : null,
+		'level' : 1,
 		'score' : 0,
 		'snake' : null,
 		'food' : null
 	};
-	setting.snake = new Snake();
-	setting.snake.init();
-	setting.food = new Food();
-	setting.food.init();
+	restart();
+	//重置游戏
+	function restart(){
+		setting.snake = new Snake();
+		setting.snake.init();
+		setting.food = new Food();
+		setting.food.init();
+		change_level(0);
+		change_score(0);
+	}
 	//记录键盘按键信息
 	$('body').keyup(function(event){
 		//方向不能与当前方向相反
 		var old_direction = setting.snake.direction;
 		switch(event.keyCode){
-			case 37:
+			case 65:
 				if(old_direction != 'right'){
 					setting.snake.direction="left";
 				}
 				break;
-			case 38:
+			case 87:
 				if(old_direction != 'down'){
 					setting.snake.direction="up";
 				}
 				break;
-			case 39:
+			case 68:
 				if(old_direction != 'left'){
 					setting.snake.direction="right";
 				}
 				break;
-			case 40:
+			case 83:
 				if(old_direction != 'up'){
 					setting.snake.direction="down";
 				}
 				break;
+			case 74:
+				start();
+				break;
+			case 75:
+				stop();
+				break;
 		}
 	});
-	//开启计时器
 	$('#start').click(function(){
+		start();
+	});
+	$('#stop').click(function(){
+		stop();
+	});
+	//开启计时器
+	function start(){
 		//计时器没开并且蛇没死
 		if(!setting.timeObj && setting.snake.state == 1){
 			setting.timeObj = setInterval(function(){
 				setting.snake.move();
 			},setting.snake.speed);
 		}
-	});
+	}
 	//结束计时器
-	$('#stop').click(function(){
+	function stop(){
 		clearInterval(setting.timeObj);
 		setting.timeObj = null;
-	});
+	}
+	//改变等级
+	function change_level(choose){
+		if(choose == 0){
+			setting.level = 1;
+			$('#level').val(setting.level);
+		}else if(choose == 1){
+			setting.level ++;
+			$('#level').val(setting.level);
+		}else if(choose == -1){
+			setting.level --;
+			$('#level').val(setting.level);
+		}
+	}
+	//改变分数
+	function change_score(choose){
+		if(choose == 0){
+			setting.score = 0;
+			$("#score").val(setting.score);
+		}else if(choose == 1){
+			setting.score += setting.food.score;
+			$("#score").val(setting.score);
+		}
+	}
 </script>
