@@ -1,10 +1,11 @@
-## My work(Began on 2015-01-24):
+## My work:
 
 ### Snake
 - It is made of HTML,CSS,JAVASCRIPT.
 - It requires Jquery.
 - It is a common game called Snake.
 - Different from others,it has two changes: 1. Snake has three lifes at the beginng. 2. Food has three type:normal、lower-speed、add-life,which makes more fun.
+- Operation: W、S、A、D is for up、down、left、right。J and K is for start and stop.
 
 ### Mine
 - It is made of HTML,CSS,JAVASCRIPT.
