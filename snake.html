@@ -8,22 +8,23 @@
 	.btn{padding:5 20px;}
 	.input-text{padding:5 10px;width:60px;}
 	.node-body{background-color:#666;width:10px;height:10px;position:absolute;}
-	.node-food{background-color:#9400D3;width:10px;height:10px;position:absolute;}
+	.node-food{width:10px;height:10px;position:absolute;}
 	.low-food{background-color:#FFDAB9}
 	.normal-food{background-color:#FA8072}
 	.high-food{background-color:#FF0000}
-	.level-food{background-color:#32CD32}
-	.gold-food{background-color:#FFFF00}
-	.random-food{background-color:#9400D3}
+	.speed-food{background-color:#32CD32}
+	.life-food{background-color:#FFFF00}
+	/*.random-food{background-color:#9400D3}*/
 </style>
 </head>
 <body>
 	<div id='map'></div>
 	<div id="control">
 		<input type="button" class='btn' id="start" value="Start"/>
-		<input type="button" class='btn' id="stop" value="Stop"/>
-		Level:<input type="text" class='input-text' id='level' size="1" value="1">
-		Score:<input type="text" class='input-text' id='score' size="1" value="0">
+		<input type="button" class='btn' id="stop" value="Stop"/><br/><br/>
+		Life: <input type="text" class='input-text' id='life' size="1" value="3" disabled>
+		Level: <input type="text" class='input-text' id='level' size="1" value="1" disabled>
+		Score: <input type="text" class='input-text' id='score' size="1" value="0">
 	</div>
 </body>
 </html>
@@ -72,7 +73,9 @@
 			}else if(this.score <= 100){
 				type = "high-food";
 			}else if(this.score <= 125){
-				type = "level-food";
+				type = "speed-food";
+			}else{
+				type = "life-food";
 			}
 			$('#map').append("<span class='node-food "+type+"' style='left:"+x+";top:"+y+"' data-xy='"+x+"-"+y+"'></span>");
 		};
@@ -89,7 +92,7 @@
 
 	//蛇的构造函数
 	function Snake(){
-		this.state = 1;
+		this.state = 1;//1活0死
 		this.direction = 'down';
 		this.speed = 100;//指时间间隔，越小速度越快
 		this.len = 0;
@@ -183,41 +186,58 @@
 		this.setSpeed = function(){
 			//得分越多速度越快
 			var score = setting.score;
-			var old_speed = this.speed;
-			if(score >= 100 && score < 200){
-				this.speed = 75;
-			}else if(score >= 200 && score < 400){
-				this.speed = 50;
+			if(score >= 200 && score < 400){
+				this.speed = 80;
 			}else if(score >= 400 && score < 600){
-				this.speed = 25;
+				this.speed = 70;
 			}else if(score >= 600 && score < 800){
-				this.speed = 10;
+				this.speed = 60;
+			}else if(score >= 800 && score < 1000){
+				this.speed = 50;
+			}else if(score >= 1000){
+				this.speed = 40;
 			}
-			//降级果实
+			//six level
+			var level = Math.floor(score / 200) + 1;
+			if(setting.level != level && level < 7){
+				change_level(level);
+			}
+			//降速果实
 			if(setting.food.score > 100 && setting.food.score <= 125){
-				change_level(-1);
 				this.speed += 20;
-			}else if(old_speed != this.speed){
-				change_level(1);
+			}
+			//生命果实
+			if(setting.food.score > 125){
+				change_life(1);
 			}
 			stop();
 			start();
 		}
 		//死亡
 		this.die = function(){
-			this.state = 0;
-			stop();
-			alert('sorry!');
+			if(setting.life <= 1){
+			//最后一条命
+				stop();
+				this.state = 0;
+				change_life(-1);
+				alert('Sorry!');
+			}else{
+			//还有命
+				stop();
+				change_life(-1);
+				alert('Select new direction and start again!');
+			}
 		};
 	}
 
 	//全局设置
 	var setting = {
-		'timeObj' : null,
-		'level' : 1,
-		'score' : 0,
-		'snake' : null,
-		'food' : null
+		'timeObj' : null,//计时器对象
+		'life' : 3,//生命
+ 		'level' : 1,//等级
+		'score' : 0,//分数
+		'snake' : null,//蛇对象
+		'food' : null//食物对象
 	};
 	restart();
 	//重置游戏
@@ -226,6 +246,7 @@
 		setting.snake.init();
 		setting.food = new Food();
 		setting.food.init();
+		change_life(0);
 		change_level(0);
 		change_score(0);
 	}
@@ -287,11 +308,8 @@
 		if(choose == 0){
 			setting.level = 1;
 			$('#level').val(setting.level);
-		}else if(choose == 1){
-			setting.level ++;
-			$('#level').val(setting.level);
-		}else if(choose == -1){
-			setting.level --;
+		}else if(choose > 0){
+			setting.level = choose;
 			$('#level').val(setting.level);
 		}
 	}
@@ -303,6 +321,19 @@
 		}else if(choose == 1){
 			setting.score += setting.food.score;
 			$("#score").val(setting.score);
+		}
+	}
+	//改变生命
+	function change_life(choose){
+		if(choose == 0){
+			setting.life = 3;
+			$("#life").val(setting.life);
+		}else if(choose == 1){
+			setting.life ++;
+			$("#life").val(setting.life);
+		}else if(choose == -1){
+			setting.life --;
+			$("#life").val(setting.life);
 		}
 	}
 </script>
