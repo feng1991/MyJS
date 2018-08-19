@@ -4,11 +4,15 @@ var help = {};
 
 (function($){
 
-	//计数器(闭包机制)
-	var count = 0;
-	$.count = function(){
-		return ++count;
+	//计数器
+	var count = function(){
+		var count = 0;
+		return function(){
+			return ++count;
+		}
 	}
+	$.count = count();
+
 
 	//区间随机数
 	$.mt_rand = function(min,max){
@@ -17,6 +21,17 @@ var help = {};
 			min = 1;
 		}
 		return min + Math.floor( Math.random() * (max-min) );
+	}
+
+
+	//类型判断
+	var typeArr = ['Array','String','Number','Boolean','Date','Function','Object'];
+	for(var i = 0;i < typeArr.length;i++){
+		(function(i){
+			$['is'+typeArr[i]] = function(obj){
+				return Object.prototype.toString.call(obj) == '[object '+typeArr[i]+']';
+			}
+		})(i);
 	}
 
 
