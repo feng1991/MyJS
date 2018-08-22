@@ -35,5 +35,16 @@ var help = {};
 	}
 
 
+	//单例模式,fn为构造函数
+	var getSingle = function(fn){
+		var obj = null;
+		return function(){
+			return obj || (obj = fn.apply(this,arguments));	
+		}
+	};
+	//var createSomething = getSingle(function(){
+		//creating an object
+	//})
+
 })(help);
 
